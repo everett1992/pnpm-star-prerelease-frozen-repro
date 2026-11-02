@@ -1,0 +1,86 @@
+== tools
+pnpm 12.14.0, pnpr 0.1.0-alpha.17, npm 11.20.0, node v26.12.0, semver 7.8.6, Linux x86_64
+== start pnpr on http://127.0.0.1:7682/npm/
+== round 1 (before the older npm lockfile is written)
+  @demo/only-pre@1.0.0-alpha.0 (tag latest)
+  @demo/pre-over-stable@1.0.0 (tag latest)
+  @demo/stable-latest@1.0.0 (tag latest)
+  @demo/needs-build@1.0.0 (tag latest)
+== the older npm lockfiles (npm install --package-lock-only, round 1)
+== round 2
+  @demo/only-pre@1.0.0-alpha.1 (tag latest)
+  @demo/pre-over-stable@2.0.0-alpha.0 (tag latest)
+  @demo/stable-latest@1.0.1 (tag latest)
+  @demo/stable-latest@1.1.0-beta.0 (tag next)
+  @demo/parent@1.0.0 (tag latest), depends on each case package with "*"
+  dist-tags of @demo/only-pre: {"latest":"1.0.0-alpha.1"}
+  dist-tags of @demo/pre-over-stable: {"latest":"2.0.0-alpha.0"}
+  dist-tags of @demo/stable-latest: {"latest":"1.0.1","next":"1.1.0-beta.0"}
+
+== node-semver 7.8.6: does the `latest` version satisfy the range?
+
+| version | range | satisfies | { loose } | { includePrerelease } |
+|---|---|---|---|---|
+| 1.0.0-alpha.1 | `*` | false | false | true |
+| 1.0.0-alpha.1 | `""` | false | false | true |
+| 1.0.0-alpha.1 | `x` | false | false | true |
+| 1.0.0-alpha.1 | `>=0` | false | false | true |
+| 2.0.0-alpha.0 | `*` | false | false | true |
+| 2.0.0-alpha.0 | `""` | false | false | true |
+| 2.0.0-alpha.0 | `x` | false | false | true |
+| 2.0.0-alpha.0 | `>=0` | false | false | true |
+| 1.0.1 | `*` | true | true | true |
+| 1.0.1 | `""` | true | true | true |
+| 1.0.1 | `x` | true | true | true |
+| 1.0.1 | `>=0` | true | true | true |
+
+== pnpm 12.14.0
+Logs: .work/pnpm/<case>-<n>/*.log
+
+| case | range | install locks | checkout: install sees lock as fresh | checkout: --frozen-lockfile | --frozen-lockfile, node_modules present | approve-builds --all | postinstall ran | rebuild | import: npm lock → pnpm lock | frozen after import |
+|---|---|---|---|---|---|---|---|---|---|---|
+| only-pre | `*` | 1.0.0-alpha.1 | **no** (resolves again) | **ERR_PNPM_OUTDATED_LOCKFILE** | **ERR_PNPM_OUTDATED_LOCKFILE** | **ERR_PNPM_OUTDATED_LOCKFILE** | no (allowBuilds saved) | **ERR_PNPM_OUTDATED_LOCKFILE** | 1.0.0-alpha.0 → 1.0.0-alpha.1 | **ERR_PNPM_OUTDATED_LOCKFILE** |
+| only-pre | `""` | 1.0.0-alpha.1 | yes | ok | ok | ok | yes | ok | 1.0.0-alpha.0 → 1.0.0-alpha.1 | ok |
+| only-pre | `x` | ERR_PNPM_NO_MATCHING_VERSION | - | - | - | - | - | - | - | - |
+| only-pre | `>=0` | ERR_PNPM_NO_MATCHING_VERSION | - | - | - | - | - | - | - | - |
+| only-pre | `latest` | 1.0.0-alpha.1 | yes | ok | ok | ok | yes | ok | 1.0.0-alpha.0 → 1.0.0-alpha.1 | ok |
+| pre-over-stable | `*` | 1.0.0 | yes | ok | ok | ok | yes | ok | 1.0.0 → 1.0.0 | ok |
+| pre-over-stable | `""` | 1.0.0 | yes | ok | ok | ok | yes | ok | 1.0.0 → 1.0.0 | ok |
+| pre-over-stable | `x` | 1.0.0 | yes | ok | ok | ok | yes | ok | 1.0.0 → 1.0.0 | ok |
+| pre-over-stable | `>=0` | 1.0.0 | yes | ok | ok | ok | yes | ok | 1.0.0 → 1.0.0 | ok |
+| pre-over-stable | `latest` | 2.0.0-alpha.0 | yes | ok | ok | ok | yes | ok | 1.0.0 → 2.0.0-alpha.0 | ok |
+| stable-latest | `*` | 1.0.1 | yes | ok | ok | ok | yes | ok | 1.0.0 → 1.0.0 | ok |
+| stable-latest | `""` | 1.0.1 | yes | ok | ok | ok | yes | ok | 1.0.0 → 1.0.0 | ok |
+| stable-latest | `x` | 1.0.1 | yes | ok | ok | ok | yes | ok | 1.0.0 → 1.0.0 | ok |
+| stable-latest | `>=0` | 1.0.1 | yes | ok | ok | ok | yes | ok | 1.0.0 → 1.0.0 | ok |
+| stable-latest | `latest` | 1.0.1 | yes | ok | ok | ok | yes | ok | 1.0.0 → 1.0.1 | ok |
+
+== pnpm, transitive "*" (through @demo/parent)
+locks: @demo/only-pre 1.0.0-alpha.1, @demo/pre-over-stable 2.0.0-alpha.0, @demo/stable-latest 1.0.1; --frozen-lockfile in a clean checkout: ok
+
+== npm 11.20.0
+Logs: .work/npm/<case>-<n>/*.log
+
+| case | range | npm install locks | npm ci | npm ls | npm rebuild | older lock (round 1) | npm ci with it | npm ls with it |
+|---|---|---|---|---|---|---|---|---|
+| only-pre | `*` | 1.0.0-alpha.1 | ok | ok | ok | 1.0.0-alpha.0 | ok | ok |
+| only-pre | `""` | 1.0.0-alpha.1 | ok | ok | ok | 1.0.0-alpha.0 | ok | ok |
+| only-pre | `x` | ETARGET | - | - | - | ETARGET | - | - |
+| only-pre | `>=0` | ETARGET | - | - | - | ETARGET | - | - |
+| only-pre | `latest` | 1.0.0-alpha.1 | ok | ok | ok | 1.0.0-alpha.0 | ok | ok |
+| pre-over-stable | `*` | 2.0.0-alpha.0 | ok | ok | ok | 1.0.0 | ok | ok |
+| pre-over-stable | `""` | 2.0.0-alpha.0 | ok | ok | ok | 1.0.0 | ok | ok |
+| pre-over-stable | `x` | 1.0.0 | ok | ok | ok | 1.0.0 | ok | ok |
+| pre-over-stable | `>=0` | 1.0.0 | ok | ok | ok | 1.0.0 | ok | ok |
+| pre-over-stable | `latest` | 2.0.0-alpha.0 | ok | ok | ok | 1.0.0 | ok | ok |
+| stable-latest | `*` | 1.0.1 | ok | ok | ok | 1.0.0 | ok | ok |
+| stable-latest | `""` | 1.0.1 | ok | ok | ok | 1.0.0 | ok | ok |
+| stable-latest | `x` | 1.0.1 | ok | ok | ok | 1.0.0 | ok | ok |
+| stable-latest | `>=0` | 1.0.1 | ok | ok | ok | 1.0.0 | ok | ok |
+| stable-latest | `latest` | 1.0.1 | ok | ok | ok | 1.0.0 | ok | ok |
+
+== npm, transitive "*" (through @demo/parent)
+npm install: ok; locks: @demo/only-pre 1.0.0-alpha.1, @demo/pre-over-stable 2.0.0-alpha.0, @demo/stable-latest 1.0.1; npm ci: ok; npm ls: ok
+
+RESULT: reproduced: a lockfile written by pnpm install is rejected by pnpm install --frozen-lockfile in a clean checkout
+exit 1

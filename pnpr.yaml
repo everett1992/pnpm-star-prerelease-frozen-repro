@@ -1,0 +1,9 @@
+# A throwaway local registry: every @demo/* package is hosted here, nothing is proxied.
+storage: ./.work/pnpr-storage
+registries:
+  local:
+    type: hosted
+    packages:
+      '@demo/*':
+        publish: $all
+defaultRegistry: local
