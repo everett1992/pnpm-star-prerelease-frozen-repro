@@ -24,4 +24,4 @@ It exits 1 if step 4 fails, 0 if it passes, and 2 if the setup fails.
 Output for 11.28.9, 12.16.1 and 12.17.0 is in [`results/`](results).
 No settings are needed: the default `minimumReleaseAge` does not stop pnpm from locking the seconds-old version.
 
-[`ISSUE.md`](ISSUE.md) is the draft bug report.
+Reported as pnpm/pnpm#17594 ([`ISSUE.md`](ISSUE.md) is the text): https://github.com/pnpm/pnpm/issues/17594
