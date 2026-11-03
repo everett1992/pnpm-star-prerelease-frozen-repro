@@ -1,0 +1,8 @@
+{
+  "name": "@demo/only-pre",
+  "version": "1.0.0-alpha.0",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "node -e \"require('fs').writeFileSync('built.txt', '')\""
+  }
+}
